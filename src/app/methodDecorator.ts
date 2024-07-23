@@ -105,3 +105,69 @@ We are doing exactly what is done for fetchComments() but we are combining the @
 
 
 
+// adding typing to the decorators
+export function typedLogging<This,Args extends any[],Return>
+    (
+    target:(this:This,...args:Args)=>Return,
+    context: ClassMethodDecoratorContext<This,(this:This,...args:Args)=>Return>
+    )
+    :(this:This,...args:Args)=>Return
+    {
+    console.log(`@log: ${target}`)
+    const methodName = String(context.name);
+    //above 2 lines execute on app load only
+    return function(this: This, ...args: Args):Return{
+        //executes everytime the decorator executes.
+    console.log("running the @log decorator")
+    console.log(`${methodName} started at ${new Date().getTime()}`);
+    try{
+    return target.apply(this, args);
+    }
+    finally{
+        //this will execute irrespective of success and failure
+    console.log(`${methodName} finished at ${new Date().getTime()}`);
+    }
+    }
+}
+
+//add typing to decorator factory
+export function typedRetryWithParams<This,Args extends any[],Return>(retryCount:number){
+    return function(
+        target:(this:This,...args:Args)=>Return,
+        context:ClassMethodDecoratorContext<This,(this:This,...args:Args)=>Return>
+        ):(this:This,...args:Args)=>Return{
+        console.log(`@retry: ${target}`); //executes on application load only. Not everytime, the decorator executes
+        const resultMethod=function(this:This,...args:Args):Return{
+            //executes everytime the decorator executes.
+            for(let i=1;i<=retryCount;i++) {
+                console.log(`Running @retry : ${i}`)
+                try{
+                return target.apply(this,args);
+                }
+                catch(err){
+                    console.log(`Retry errored out.Will @retry ${retryCount-i} more times`);
+                }
+
+        }
+    
+        throw new Error("All retries exhausted")
+    }
+        return resultMethod; 
+    }
+}
+
+//add typing to decorator composition
+export function TypedlogAndRetryWithParams<This,Args extends any[],Return>
+(target:(this:This,...args:Args)=>Return,
+context:ClassMethodDecoratorContext<This,(this:This,...args:Args)=>Return>
+):(this:This,...args:Args)=>Return
+{
+    /*
+ We are doing exactly what is done for fetchComments() but we are combining the @logging and
+ @retry decorators into a single decorator and using it.
+     */  
+    const withRetryParams=typedRetryWithParams<This,Args,Return>(2);
+    const withRetry=withRetryParams(target,context);
+    const withLog=typedLogging(withRetry,context);
+    return withLog;
+ }

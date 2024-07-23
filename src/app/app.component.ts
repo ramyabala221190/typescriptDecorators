@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { logAndRetry, logAndRetryWithParams, logging, retry, retryWithParams } from './methodDecorator';
+import { logAndRetry, logAndRetryWithParams, logging, retry, retryWithParams, typedLogging } from './methodDecorator';
 import { DataService } from './data.service';
 
 @Component({
@@ -7,6 +7,7 @@ import { DataService } from './data.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
+
 export class AppComponent {
   title = 'applicationsOfDecorator';
 
@@ -67,6 +68,12 @@ export class AppComponent {
   fetchPhotos(){
     console.log("executing fetchPhotos method")
     throw new Error("some error occured fetching photos")
+  }
+
+  @typedLogging
+  fetchAlbums(){
+    console.log("executing fetchAlbums method")
+    throw new Error("some error occured fetching albums")
   }
 
 
